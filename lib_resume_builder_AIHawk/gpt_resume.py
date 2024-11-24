@@ -20,31 +20,32 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import re  # For regex parsing, especially in `parse_wait_time_from_error_message`
-from requests.exceptions import HTTPError as HTTPStatusError  # Handling HTTP status errors
+from requests.exceptions import (
+    HTTPError as HTTPStatusError,
+)  # Handling HTTP status errors
 import openai
 
 load_dotenv()
 
-log_folder = 'log'
+log_folder = "log"
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
 
 # Configura il file di log
-log_file = os.path.join(log_folder, 'app.log')
+log_file = os.path.join(log_folder, "app.log")
 
 # Configura il logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file, encoding='utf-8')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(log_file, encoding="utf-8")],
 )
 
 logger = logging.getLogger(__name__)
 
+
 class LLMLogger:
-    
+
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
 
@@ -106,7 +107,6 @@ class LoggerChatModel:
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
 
-
     def __call__(self, messages: List[Dict[str, str]]) -> str:
         max_retries = 15
         retry_delay = 10
@@ -120,21 +120,30 @@ class LoggerChatModel:
                 return reply
             except (openai.RateLimitError, HTTPStatusError) as err:
                 if isinstance(err, HTTPStatusError) and err.response.status_code == 429:
-                    self.logger.warning(f"HTTP 429 Too Many Requests: Waiting for {retry_delay} seconds before retrying (Attempt {attempt + 1}/{max_retries})...")
+                    self.logger.warning(
+                        f"HTTP 429 Too Many Requests: Waiting for {retry_delay} seconds before retrying (Attempt {attempt + 1}/{max_retries})..."
+                    )
                     time.sleep(retry_delay)
                     retry_delay *= 2
                 else:
                     wait_time = self.parse_wait_time_from_error_message(str(err))
-                    self.logger.warning(f"Rate limit exceeded or API error. Waiting for {wait_time} seconds before retrying (Attempt {attempt + 1}/{max_retries})...")
+                    self.logger.warning(
+                        f"Rate limit exceeded or API error. Waiting for {wait_time} seconds before retrying (Attempt {attempt + 1}/{max_retries})..."
+                    )
                     time.sleep(wait_time)
-            except Exception as e:
-                self.logger.error(f"Unexpected error occurred: {str(e)}, retrying in {retry_delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+            except Exception as ex:
+                self.logger.error(
+                    f"Unexpected error occurred: {str(e)}, retrying in {retry_delay} seconds... (Attempt {attempt + 1}/{max_retries})"
+                )
                 time.sleep(retry_delay)
                 retry_delay *= 2
 
-        self.logger.critical("Failed to get a response from the model after multiple attempts.")
-        raise Exception("Failed to get a response from the model after multiple attempts.")
-
+        self.logger.critical(
+            "Failed to get a response from the model after multiple attempts."
+        )
+        raise Exception(
+            "Failed to get a response from the model after multiple attempts."
+        )
 
     def parse_llmresult(self, llmresult: AIMessage) -> Dict[str, Dict]:
         # Parse the LLM result into a structured format.
@@ -178,184 +187,117 @@ class LLMResumer:
     def set_resume(self, resume):
         self.resume = resume
 
-    def generate_header(self) -> str:
+    def generate_header_section(self) -> str:
         header_prompt_template = self._preprocess_template_string(
             self.strings.prompt_header
         )
         prompt = ChatPromptTemplate.from_template(header_prompt_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
-        output = chain.invoke({
-            "personal_information": self.resume.personal_information
-        })
+        output = chain.invoke(
+            {
+                "name": self.resume.name,
+                "job_title": self.resume.job_title,
+            }
+        )
         return output
 
-    def generate_education_section(self) -> str:
-        education_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_education
+    def generate_contact_section(self, section) -> str:
+        contact_section_template = self._preprocess_template_string(
+            self.strings.prompt_contact_section
         )
-        prompt = ChatPromptTemplate.from_template(education_prompt_template)
+        prompt = ChatPromptTemplate.from_template(contact_section_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
-        output = chain.invoke({
-            "education_details": self.resume.education_details,
-        })
+        output = chain.invoke(
+            {
+                "section_entries": section.entries,
+            }
+        )
         return output
 
-    def generate_work_experience_section(self) -> str:
-        work_experience_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_working_experience
+    def generate_summary_section(self, section) -> str:
+        summary_section_template = self._preprocess_template_string(
+            self.strings.prompt_summary_section
         )
-        prompt = ChatPromptTemplate.from_template(work_experience_prompt_template)
+        prompt = ChatPromptTemplate.from_template(summary_section_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
-        output = chain.invoke({
-            "experience_details": self.resume.experience_details
-        })
+        output = chain.invoke(
+            {
+                "section_icon": section.icon,
+                "section_title": section.title,
+                "section_content": section.content,
+            }
+        )
         return output
 
-    def generate_side_projects_section(self) -> str:
-        side_projects_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_side_projects
+    def generate_list_section(self, section) -> str:
+        chronological_section_template = self._preprocess_template_string(
+            self.strings.prompt_chronological_section
         )
-        prompt = ChatPromptTemplate.from_template(side_projects_prompt_template)
+        prompt = ChatPromptTemplate.from_template(chronological_section_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
-        output = chain.invoke({
-            "projects": self.resume.projects
-        })
+        output = chain.invoke(
+            {
+                "section_icon": section.icon,
+                "section_title": section.title,
+                "section_entries": section.entries,
+            }
+        )
         return output
 
-    def generate_achievements_section(self) -> str:
-        logging.debug("Starting achievements section generation")
-
-        achievements_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_achievements
+    def generate_list_section(self, section) -> str:
+        list_section_template = self._preprocess_template_string(
+            self.strings.prompt_list_section
         )
-        logging.debug(f"Achievements template: {achievements_prompt_template}")
-
-        prompt = ChatPromptTemplate.from_template(achievements_prompt_template)
-        logging.debug(f"Prompt: {prompt}")
-
+        prompt = ChatPromptTemplate.from_template(list_section_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
-        logging.debug(f"Chain created: {chain}")
-
-        input_data = {
-            "achievements": self.resume.achievements,
-            "certifications": self.resume.certifications,
-            "job_description": self.job_description
-        }
-        logging.debug(f"Input data for the chain: {input_data}")
-
-        output = chain.invoke(input_data)
-        logging.debug(f"Chain invocation result: {output}")
-
-        logging.debug("Achievements section generation completed")
-        return output
-
-    def generate_certifications_section(self) -> str:
-        logging.debug("Starting Certifications section generation")
-
-        certifications_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_certifications
+        output = chain.invoke(
+            {
+                "section_icon": section.icon,
+                "section_title": section.title,
+                "section_orientation": section.orientation,
+                "section_entries": section.entries,
+            }
         )
-        logging.debug(f"Certifications template: {certifications_prompt_template}")
-
-        prompt = ChatPromptTemplate.from_template(certifications_prompt_template)
-        logging.debug(f"Prompt: {prompt}")
-
-        chain = prompt | self.llm_cheap | StrOutputParser()
-        logging.debug(f"Chain created: {chain}")
-
-        input_data = {
-            "certifications": self.resume.certifications,
-            "job_description": self.job_description
-        }
-        logging.debug(f"Input data for the chain: {input_data}")
-
-        output = chain.invoke(input_data)
-        logging.debug(f"Chain invocation result: {output}")
-
-        logging.debug("Certifications section generation completed")
-        return output
-    
-    
-
-    def generate_additional_skills_section(self) -> str:
-        additional_skills_prompt_template = self._preprocess_template_string(
-            self.strings.prompt_additional_skills
-        )
-        
-        skills = set()
-
-        if self.resume.experience_details:
-            for exp in self.resume.experience_details:
-                if exp.skills_acquired:
-                    skills.update(exp.skills_acquired)
-
-        if self.resume.education_details:
-            for edu in self.resume.education_details:
-                if edu.exam:
-                    for exam in edu.exam:
-                        skills.update(exam.keys())
-        prompt = ChatPromptTemplate.from_template(additional_skills_prompt_template)
-        chain = prompt | self.llm_cheap | StrOutputParser()
-        output = chain.invoke({
-            "languages": self.resume.languages,
-            "interests": self.resume.interests,
-            "skills": skills,
-        })
-        
         return output
 
     def generate_html_resume(self) -> str:
         # Define a list of functions to execute in parallel
         def header_fn():
-            if self.resume.personal_information and self.job_description:
+            if (
+                self.resume.personal_details.name
+                and self.resume.personal_details.job_title
+            ):
                 return self.generate_header()
             return ""
 
-        def education_fn():
-            if self.resume.education_details and self.job_description:
-                return self.generate_education_section()
-            return ""
-
-        def work_experience_fn():
-            if self.resume.experience_details and self.job_description:
-                return self.generate_work_experience_section()
-            return ""
-
-        def side_projects_fn():
-            if self.resume.projects and self.job_description:
-                return self.generate_side_projects_section()
-            return ""
-
-        def achievements_fn():
-            if self.resume.achievements and self.job_description:
-                return self.generate_achievements_section()
-            return ""
-        
-        def certifications_fn():
-            if self.resume.certifications and self.job_description:
-                return self.generate_certifications_section()
-            return ""
-
-        def additional_skills_fn():
-            if (self.resume.experience_details or self.resume.education_details or
-                self.resume.languages or self.resume.interests) and self.job_description:
-                return self.generate_additional_skills_section()
-            return ""
+        def get_section_fn(section):
+            match section.section_type:
+                case "contact":
+                    return lambda: self.generate_contact_section(section)
+                case "summary":
+                    return lambda: self.generate_summary_section(section)
+                case "chronological":
+                    return lambda: self.generate_chronological_section(section)
+                case "list":
+                    return lambda: self.generate_list_section(section)
+                case _:
+                    return lambda: self.logger.critical(
+                        f"Error attempting to parse section with type: {section.type}"
+                    )
 
         # Create a dictionary to map the function names to their respective callables
         functions = {
             "header": header_fn,
-            "education": education_fn,
-            "work_experience": work_experience_fn,
-            "side_projects": side_projects_fn,
-            "achievements": achievements_fn,
-            "certifications": certifications_fn,
-            "additional_skills": additional_skills_fn,
         }
+
+        for index, section in enumerate(self.resume.sections):
+            functions[f"section-{index}"] = get_section_fn(section)
 
         # Use ThreadPoolExecutor to run the functions in parallel
         with ThreadPoolExecutor() as executor:
-            future_to_section = {executor.submit(fn): section for section, fn in functions.items()}
+            future_to_section = {
+                executor.submit(fn): section for section, fn in functions.items()
+            }
             results = {}
             for future in as_completed(future_to_section):
                 section = future_to_section[future]
@@ -364,16 +306,12 @@ class LLMResumer:
                     if result:
                         results[section] = result
                 except Exception as exc:
-                    print(f'{section} ha generato un\'eccezione: {exc}')
+                    logging.debug(f"{section} generated 1 exc: {exc}")
         full_resume = "<body>\n"
         full_resume += f"  {results.get('header', '')}\n"
         full_resume += "  <main>\n"
-        full_resume += f"    {results.get('education', '')}\n"
-        full_resume += f"    {results.get('work_experience', '')}\n"
-        full_resume += f"    {results.get('side_projects', '')}\n"
-        full_resume += f"    {results.get('achievements', '')}\n"
-        full_resume += f"    {results.get('certifications', '')}\n"
-        full_resume += f"    {results.get('additional_skills', '')}\n"
+        for index in enumerate(self.resume.sections):
+            full_resume += f"    {results.get(f'section-{index}', '')}\n"
         full_resume += "  </main>\n"
         full_resume += "</body>"
         return full_resume

@@ -1,97 +1,94 @@
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Union, Literal
+from typing import List, Optional, Union, Literal
 import yaml
-from pydantic import BaseModel, EmailStr, HttpUrl, Field
+from pydantic import BaseModel, EmailStr, AnyUrl, Field
+from typing_extensions import Annotated
 
 
-class SectionBase(BaseModel):
-    section_icon: Optional[str]
-    section_title: Optional[str]
+class ResumeSectionBase(BaseModel):
+    variant: str
+    title: Optional[str] = None
+    icon: Optional[str] = Field(None, pattern=r"^fa")
 
 
-class SectionEntryBase(BaseModel):
-    title: Optional[str]
-    description: Optional[str] = None
-    icon: Optional[str] = None
-    link: Optional[str] = None
-    details: Optional[List[str]] = None
+class ResumeSectionEntryBase(BaseModel):
+    title: Optional[str] = None
+    link: Optional[AnyUrl] = None
 
 
-class ContactSection(SectionBase):
-    section_type: Literal["contact"]
-    section_entries: Optional[List[SectionEntryBase]] = None
+class ResumeSummarySection(ResumeSectionBase):
+    variant: Literal["summary"]
+    content: str
 
 
-class SummarySection(SectionBase):
-    section_type: Literal["summary"]
-    section_content: Optional[str]
+class ResumeContactCustomSectionEntry(ResumeSectionEntryBase):
+    title: str
+    icon: str = Field(..., pattern=r"^fa")
 
 
-class ChronologicalSectionEntry(SectionEntryBase):
+class ResumeContactSection(ResumeSectionBase):
+    variant: Literal["contact"]
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
+    linkedin: Optional[AnyUrl] = None
+    github: Optional[AnyUrl] = None
+    website: Optional[AnyUrl] = None
+    custom_entries: Optional[List[ResumeContactCustomSectionEntry]] = Field(
+        None, min_items=1
+    )
+
+
+class ResumeChronologicalSectionEntry(ResumeSectionEntryBase):
+    title: str
+    dates: List[str] = Field(..., min_items=1, max_item=2)
     location_name: Optional[str]
     location_address: Optional[str]
+    content: Optional[str] = None
+    details: Optional[List[str]] = Field(None, min_items=1)
 
 
-class ChronologicalSection(SectionBase):
-    section_type: Literal["chronological"]
-    section_entries: Optional[List[ChronologicalSectionEntry]] = None
+class ResumeChronologicalSection(ResumeSectionBase):
+    variant: Literal["chronological"]
+    title: str
+    entries: List[ResumeChronologicalSectionEntry] = Field(..., min_items=1)
 
 
-class ListSection(SectionBase):
-    section_type: Literal["list"]
-    section_entries: Optional[List[SectionEntryBase]] = None
-    section_orientation: Literal["horizontal", "vertical"]
+class ResumeListSectionEntry(ResumeSectionEntryBase):
+    title: str
+    description: Optional[str] = None
+    content: Optional[str] = None
+    details: Optional[List[str]] = Field(None, min_items=1)
 
 
-Section = Union[ContactSection, SummarySection, ChronologicalSection, ListSection]
+class ResumeListSectionContentEntry(ResumeSectionEntryBase):
+    title: str
+    description: Optional[str] = None
+    details: Optional[None] = None
+    content: Optional[str] = None
 
 
-class PersonalInformation(BaseModel):
-    name: Optional[str]
-    surname: Optional[str]
-    job_title: Optional[str]
-    date_of_birth: Optional[str]
-    country: Optional[str]
-    city: Optional[str]
-    address: Optional[str]
-    zip_code: Optional[str] = Field(None, min_length=5, max_length=10)
-    phone_prefix: Optional[str]
-    phone: Optional[str]
-    email: Optional[EmailStr]
-    github: Optional[HttpUrl] = None
-    linkedin: Optional[HttpUrl] = None
+class ResumeListSection(ResumeSectionBase):
+    variant: Literal["list"]
+    orientation: Literal["horizontal", "vertical"]
+    title: str
+    entries: List[ResumeListSectionEntry] = Field(..., min_items=1)
 
 
-class Availability(BaseModel):
-    notice_period: Optional[str]
-
-
-class SalaryExpectations(BaseModel):
-    salary_range_usd: Optional[str]
-
-
-class SelfIdentification(BaseModel):
-    gender: Optional[str]
-    pronouns: Optional[str]
-    veteran: Optional[str]
-    disability: Optional[str]
-    ethnicity: Optional[str]
-
-
-class LegalAuthorization(BaseModel):
-    eu_work_authorization: Optional[str]
-    us_work_authorization: Optional[str]
-    requires_us_visa: Optional[str]
-    requires_us_sponsorship: Optional[str]
-    requires_eu_visa: Optional[str]
-    legally_allowed_to_work_in_eu: Optional[str]
-    legally_allowed_to_work_in_us: Optional[str]
-    requires_eu_sponsorship: Optional[str]
+ResumeSection = Annotated[
+    Union[
+        ResumeContactSection,
+        ResumeSummarySection,
+        ResumeChronologicalSection,
+        ResumeListSection,
+    ],
+    Field(discriminator="variant"),
+]
 
 
 class Resume(BaseModel):
-    personal_information: Optional[PersonalInformation]
-    sections: Optional[List[Section]] = None
+    name: str
+    job_title: Optional[str]
+    sections: List[ResumeSection] = Field(..., min_items=1)
 
     def __init__(self, yaml_str: str):
         try:

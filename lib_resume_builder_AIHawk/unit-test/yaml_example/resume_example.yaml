@@ -1,0 +1,145 @@
+name: John Doe
+job_title: Software Developer
+
+sections:
+  - variant: contact
+    address: City, Country
+    email: johndoe@example.com
+    phone: +123-45-678-910
+    linkedin: https://www.linkedin.com/in/johndoe/
+    github: https://www.github.com/johndoe
+    website: https://www.johndoe.com/
+    custom_entries:
+      - title: twitch.tv/tombastep
+        icon: fa-brands fa-twitch
+        link: https://www.twitch.tv/tombastep
+
+  - variant: summary
+    content: >
+      Enthusiastic developer with a passion for solving problems and creating
+      efficient solutions. Excels in working with cross-functional teams on
+      complex projects. Skilled in multiple disciplines with a focus on
+      delivering impactful results.
+
+  - variant: list
+    title: Skills
+    icon: fa-solid fa-head-side-virus
+    orientation: horizontal
+    entries:
+      - title: Frontend
+        content: JavaScript, TypeScript, React, Next.js, Three.js, HTML, MUI, Tailwind, styled-components
+      - title: Backend
+        content: Node.js, Python, SQL, MongoDB, REST APIs, Serverless, AWS, Microservices, Unit Testing
+      - title: 3D, CAD & CGI
+        content: Figma, Adobe Suite, Rhino 3D, Grasshopper, Cinema4D, QGIS, Houdini, Blender, Revit
+      - title: Other
+        content: Git, Agile Methodologies, Lean Startup, Design Thinking, Public Speaking
+
+  - variant: chronological
+    title: Software Experience
+    icon: fa-solid fa-code
+    entries:
+      - title: Frontend Developer
+        link: https://example.com
+        location_name: Company A
+        location_address: City, Country
+        dates:
+          - Jan 2021
+          - present
+        details:
+          - Developed and maintained features for client-facing platforms.
+          - Designed and implemented reusable components with a focus on usability.
+          - Collaborated with teams to integrate APIs and improve workflows.
+      - title: Backend Developer
+        link: https://example.com
+        location_name: Company B
+        location_address: City, Country
+        dates:
+          - Jun 2019
+          - Dec 2020
+        details:
+          - Built APIs and audit features using cloud services.
+          - Enhanced customer-facing features to improve user experience.
+      - title: Software Engineer
+        location_name: Startup XYZ
+        location_address: City, Country
+        dates:
+          - Mar 2018
+          - May 2019
+        details:
+          - Led development of a marketplace platform.
+          - Designed system architecture and implemented core features.
+
+  - variant: chronological
+    icon: fa-solid fa-briefcase
+    title: Other Experience
+    entries:
+      - title: Fellow, Tech Fellowship
+        link: https://example.com
+        location_name: Institute of Technology
+        location_address: City, Country
+        dates:
+          - Feb 2017
+          - Jan 2018
+      - title: Junior Designer
+        link: https://example.com
+        location_name: Design Studio
+        location_address: City, Country
+        dates:
+          - Aug 2015
+          - Jan 2017
+      - title: Intern
+        link: https://example.com
+        location_name: Architecture Firm
+        location_address: City, Country
+        dates:
+          - May 2014
+          - Jul 2015
+
+  - variant: chronological
+    icon: fa-solid fa-graduation-cap
+    title: Education
+    entries:
+      - title: Bachelor of Science in Computer Science
+        location_name: University of Technology
+        location_address: City, Country
+        dates:
+          - Sep 2010
+          - Jun 2014
+      - title: Advanced Programming Certificate
+        location_name: Tech Academy
+        location_address: City, Country
+        dates:
+          - Sep 2014
+          - Dec 2014
+
+  - variant: chronological
+    icon: fa-solid fa-trophy
+    title: Awards & Honors
+    entries:
+      - title: Tech Fellowship Award
+        location_name: Institute of Technology
+        location_address: City, Country
+        dates:
+          - Jan 2018
+      - title: Project of the Year
+        location_name: University of Technology
+        location_address: City, Country
+        dates:
+          - Jun 2014
+      - title: Coding Challenge Winner
+        location_name: Tech Competition
+        location_address: City, Country
+        dates:
+          - Dec 2013
+
+  - variant: list
+    title: General
+    icon: fa-solid fa-user
+    orientation: vertical
+    entries:
+      - title: Nationality
+        description: Nationality A, Nationality B
+      - title: Languages
+        description: >
+          Fluent: Language A, Language B | Conversational: Language C, Language D | Basic: Language E, Language F

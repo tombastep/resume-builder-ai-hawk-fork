@@ -281,70 +281,77 @@ class LLMResumeJobDescription:
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "first_name": self.resume.pesonal_details.name,
-                "last_name": self.resume.pesonal_details.surname,
+                "name": self.resume.name,
                 "job_title": self.resume.job_title,
             }
         )
         return output
 
     def generate_contact_section(self, section) -> str:
-        contact_section_template = self._preprocess_template_string(
+        contact_template = self._preprocess_template_string(
             self.strings.prompt_contact_section
         )
-        prompt = ChatPromptTemplate.from_template(contact_section_template)
+        prompt = ChatPromptTemplate.from_template(contact_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_entries": section.entries,
+                "title": section.title,
+                "icon": section.icon,
+                "address": section.address,
+                "phone": section.phone,
+                "email": section.email,
+                "linkedin": section.linkedin,
+                "github": section.github,
+                "website": section.website,
+                "custom_entries": section.custom_entries,
             }
         )
         return output
 
     def generate_summary_section(self, section) -> str:
-        summary_section_template = self._preprocess_template_string(
+        summary_template = self._preprocess_template_string(
             self.strings.prompt_summary_section
         )
-        prompt = ChatPromptTemplate.from_template(summary_section_template)
+        prompt = ChatPromptTemplate.from_template(summary_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_entries": section.entries,
+                "title": section.title,
+                "icon": section.icon,
+                "entries": section.entries,
                 "job_description": self.job_description,
             }
         )
         return output
 
     def generate_chronological_section(self, section) -> str:
-        chronological_section_template = self._preprocess_template_string(
+        chronological_template = self._preprocess_template_string(
             self.strings.prompt_chronological_section
         )
-        prompt = ChatPromptTemplate.from_template(chronological_section_template)
+        prompt = ChatPromptTemplate.from_template(chronological_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_entries": section.entries,
+                "title": section.title,
+                "icon": section.icon,
+                "entries": section.entries,
                 "job_description": self.job_description,
             }
         )
         return output
 
     def generate_list_section(self, section) -> str:
-        list_section_template = self._preprocess_template_string(
+        list_template = self._preprocess_template_string(
             self.strings.prompt_list_section
         )
-        prompt = ChatPromptTemplate.from_template(list_section_template)
+        prompt = ChatPromptTemplate.from_template(list_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_orientation": section.orientation,
-                "section_entries": section.entries,
+                "icon": section.icon,
+                "title": section.title,
+                "orientation": section.orientation,
+                "entries": section.entries,
                 "job_description": self.job_description,
             }
         )
@@ -352,15 +359,10 @@ class LLMResumeJobDescription:
 
     def generate_html_resume(self) -> str:
         def header_fn():
-            if (
-                self.resume.personal_details.name
-                and self.resume.personal_details.job_title
-            ):
-                return self.generate_header()
-            return ""
+            return self.generate_header()
 
-        def get_section_fn(section):
-            match section.section_type:
+        def get_fn(section):
+            match section.variant:
                 case "contact":
                     return lambda: self.generate_contact_section(section)
                 case "summary":
@@ -371,7 +373,7 @@ class LLMResumeJobDescription:
                     return lambda: self.generate_list_section(section)
                 case _:
                     return lambda: self.logger.critical(
-                        f"Error attempting to parse section with type: {section.type}"
+                        f"Invalid section variant {section.variant}"
                     )
 
         # Create a dictionary to map the function names to their respective callables
@@ -380,7 +382,7 @@ class LLMResumeJobDescription:
         }
 
         for index, section in enumerate(self.resume.sections):
-            functions[f"section-{index}"] = get_section_fn(section)
+            functions[f"section-{index}"] = get_fn(section)
 
         # Use ThreadPoolExecutor to run the functions in parallel
         with ThreadPoolExecutor() as executor:
@@ -398,9 +400,7 @@ class LLMResumeJobDescription:
                     logging.debug(f"{section} generated 1 exc: {exc}")
         full_resume = "<body>\n"
         full_resume += f"  {results.get('header', '')}\n"
-        full_resume += "  <main>\n"
-        for index in enumerate(self.resume.sections):
+        for index, val in enumerate(self.resume.sections):
             full_resume += f"    {results.get(f'section-{index}', '')}\n"
-        full_resume += "  </main>\n"
         full_resume += "</body>"
         return full_resume

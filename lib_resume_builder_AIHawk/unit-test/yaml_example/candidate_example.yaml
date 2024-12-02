@@ -1,0 +1,53 @@
+personal_information:
+  name: Tom
+  surname: Melloul
+  job_title: Software Engineer
+  # date_of_birth:
+  country: Germany
+  city: Berlin
+  # address:
+  # zip_code:
+  phone_prefix: +972
+  phone: 54-588-0331
+  email: tombastep@gmail.com
+  github: https://www.tommelloul.com/
+  linkedin: https://www.linkedin.com/in/tommelloul/
+
+self_identification:
+  gender: Male
+  pronouns: He/Him
+  veteran: 'No'
+  disability: 'No'
+  ethnicity: White
+
+availability:
+  notice_period: 5 weeks
+
+salary_expectations:
+  salary_range_usd: 75000 - 90000
+
+legal_authorization:
+  eu_work_authorization: 'Yes'
+  us_work_authorization: 'No'
+  requires_us_visa: 'No'
+  requires_us_sponsorship: 'No'
+  requires_eu_visa: 'No'
+  legally_allowed_to_work_in_eu: 'Yes'
+  legally_allowed_to_work_in_us: 'No'
+  requires_eu_sponsorship: 'No'
+  canada_work_authorization: 'No'
+  requires_canada_visa: 'No'
+  legally_allowed_to_work_in_canada: 'No'
+  requires_canada_sponsorship: 'No'
+  uk_work_authorization: 'No'
+  requires_uk_visa: 'No'
+  legally_allowed_to_work_in_uk: 'No'
+  requires_uk_sponsorship: 'No'
+
+work_preferences:
+  remote_work: 'Yes'
+  in_person_work: 'Yes'
+  open_to_relocation: 'Yes'
+  willing_to_complete_assessments: 'Yes'
+  willing_to_undergo_drug_tests: 'Yes'
+  willing_to_undergo_background_checks: 'Yes'

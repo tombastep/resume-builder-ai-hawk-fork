@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class GlobalConfig:
     def __init__(self):
         # Inizialmente tutti i valori sono None
@@ -16,15 +17,16 @@ class GlobalConfig:
                                 <meta charset="UTF-8">
                                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                                 <title>Resume</title>
-                                <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&display=swap" rel="stylesheet" />
-                                <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&display=swap" rel="stylesheet" /> 
-                                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" /> 
+                                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css"
+                                integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ=="
+                                crossorigin="anonymous" referrerpolicy="no-referrer" />
                                 <link rel="stylesheet" href="$style_path">
                             </head>
                             $markdown
                             </body>
                             </html>
                             """
+
 
 # Creazione dell'istanza globale
 global_config = GlobalConfig()

@@ -1,25 +1,18 @@
 import json
 import os
-import tempfile
 import textwrap
 import time
 from datetime import datetime
 from typing import Dict, List
-from langchain_community.document_loaders import TextLoader
 from langchain_core.messages.ai import AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompt_values import StringPromptValue
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain_text_splitters import TokenTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
 from lib_resume_builder_AIHawk.config import global_config
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
-import re  # For regex parsing, especially in `parse_wait_time_from_error_message`
 from requests.exceptions import (
     HTTPError as HTTPStatusError,
 )  # Handling HTTP status errors
@@ -114,7 +107,7 @@ class LoggerChatModel:
         for attempt in range(max_retries):
             try:
 
-                reply = self.llm(messages)
+                reply = self.llm.invoke(messages)
                 parsed_reply = self.parse_llmresult(reply)
                 LLMLogger.log_request(prompts=messages, parsed_reply=parsed_reply)
                 return reply
@@ -187,7 +180,7 @@ class LLMResumer:
     def set_resume(self, resume):
         self.resume = resume
 
-    def generate_header_section(self) -> str:
+    def generate_header(self) -> str:
         header_prompt_template = self._preprocess_template_string(
             self.strings.prompt_header
         )
@@ -202,60 +195,68 @@ class LLMResumer:
         return output
 
     def generate_contact_section(self, section) -> str:
-        contact_section_template = self._preprocess_template_string(
+        contact_template = self._preprocess_template_string(
             self.strings.prompt_contact_section
         )
-        prompt = ChatPromptTemplate.from_template(contact_section_template)
+        prompt = ChatPromptTemplate.from_template(contact_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_entries": section.entries,
+                "title": section.title,
+                "icon": section.icon,
+                "address": section.address,
+                "phone": section.phone,
+                "email": section.email,
+                "linkedin": section.linkedin,
+                "github": section.github,
+                "website": section.website,
+                "custom_entries": section.custom_entries,
             }
         )
         return output
 
     def generate_summary_section(self, section) -> str:
-        summary_section_template = self._preprocess_template_string(
+        summary_template = self._preprocess_template_string(
             self.strings.prompt_summary_section
         )
-        prompt = ChatPromptTemplate.from_template(summary_section_template)
+        prompt = ChatPromptTemplate.from_template(summary_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_content": section.content,
+                "title": section.title,
+                "icon": section.icon,
+                "content": section.content,
             }
         )
         return output
 
-    def generate_list_section(self, section) -> str:
-        chronological_section_template = self._preprocess_template_string(
+    def generate_chronological_section(self, section) -> str:
+        chronological_template = self._preprocess_template_string(
             self.strings.prompt_chronological_section
         )
-        prompt = ChatPromptTemplate.from_template(chronological_section_template)
+        prompt = ChatPromptTemplate.from_template(chronological_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_entries": section.entries,
+                "title": section.title,
+                "icon": section.icon,
+                "entries": section.entries,
             }
         )
         return output
 
     def generate_list_section(self, section) -> str:
-        list_section_template = self._preprocess_template_string(
+        list_template = self._preprocess_template_string(
             self.strings.prompt_list_section
         )
-        prompt = ChatPromptTemplate.from_template(list_section_template)
+        prompt = ChatPromptTemplate.from_template(list_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output = chain.invoke(
             {
-                "section_icon": section.icon,
-                "section_title": section.title,
-                "section_orientation": section.orientation,
-                "section_entries": section.entries,
+                "icon": section.icon,
+                "title": section.title,
+                "orientation": section.orientation,
+                "entries": section.entries,
             }
         )
         return output
@@ -263,15 +264,10 @@ class LLMResumer:
     def generate_html_resume(self) -> str:
         # Define a list of functions to execute in parallel
         def header_fn():
-            if (
-                self.resume.personal_details.name
-                and self.resume.personal_details.job_title
-            ):
-                return self.generate_header()
-            return ""
+            return self.generate_header()
 
-        def get_section_fn(section):
-            match section.section_type:
+        def get_fn(section):
+            match section.variant:
                 case "contact":
                     return lambda: self.generate_contact_section(section)
                 case "summary":
@@ -282,7 +278,7 @@ class LLMResumer:
                     return lambda: self.generate_list_section(section)
                 case _:
                     return lambda: self.logger.critical(
-                        f"Error attempting to parse section with type: {section.type}"
+                        f"Invalid section variant {section.variant}"
                     )
 
         # Create a dictionary to map the function names to their respective callables
@@ -291,7 +287,7 @@ class LLMResumer:
         }
 
         for index, section in enumerate(self.resume.sections):
-            functions[f"section-{index}"] = get_section_fn(section)
+            functions[f"section-{index}"] = get_fn(section)
 
         # Use ThreadPoolExecutor to run the functions in parallel
         with ThreadPoolExecutor() as executor:
@@ -309,9 +305,7 @@ class LLMResumer:
                     logging.debug(f"{section} generated 1 exc: {exc}")
         full_resume = "<body>\n"
         full_resume += f"  {results.get('header', '')}\n"
-        full_resume += "  <main>\n"
-        for index in enumerate(self.resume.sections):
+        for index, val in enumerate(self.resume.sections):
             full_resume += f"    {results.get(f'section-{index}', '')}\n"
-        full_resume += "  </main>\n"
         full_resume += "</body>"
         return full_resume

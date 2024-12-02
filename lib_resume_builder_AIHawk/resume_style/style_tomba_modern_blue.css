@@ -1,0 +1,235 @@
+/*Modern Dark Blue$https://github.com/tombastep*/
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400;1,700&display=swap');
+
+:root {
+  --sections-gap: 13pt;
+  --padding-y: 20pt;
+  --padding-x: 20pt;
+
+  --section-header-gap: 6pt;
+  --section-inner-gap: 6pt;
+  --header-inner-gap: 6pt;
+
+  --entries-y-gap: 3pt;
+  --entries-x-gap: 10pt;
+  --contact-entries-x-gap: 2pt;
+
+  --entry-y-gap: 2pt;
+  --entry-x-gap: 5pt;
+  --entry-left-width: 18%;
+  --entry-right-width: 18%;
+
+  --line-height: 12pt;
+  --font-family: 'Fira Sans', sans-serif;
+  --h1-font-size: 14.5pt;
+  --h2-font-size: 10.5pt;
+  --h3-font-size: 10.5pt;
+  --regular-font-size: 9pt;
+  --link-icon-size: 6pt;
+
+  --primary-color: #17115c;
+  --secondary-color: black;
+}
+
+body {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(255, 255, 255);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  flex-direction: column;
+  line-height: var(--line-height);
+  font-stretch: normal;
+  text-rendering: geometricprecision;
+  font-variant-ligatures: none;
+  border-radius: 4px;
+  width: 210mm;
+  min-width: 210mm;
+  margin: 0;
+
+  padding: var(--padding-y) var(--padding-x);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sections-gap);
+
+  font-family: var(--font-family);
+  font-size: var(--regular-font-size);
+  font-style: normal;
+  font-weight: 400;
+  text-decoration: none;
+
+  color: var(--secondary-color);
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--header-inner-gap);
+  overflow: hidden;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-inner-gap);
+  overflow: hidden;
+}
+
+section .section-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--section-header-gap);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--entries-y-gap);
+}
+
+.entries.vertical {
+  flex-direction: column;
+  gap: var(--entries-y-gap);
+}
+
+.entries.horizontal {
+  flex-direction: row;
+  gap: var(--entries-x-gap);
+}
+
+.entries.horizontal.wrappable {
+  white-space: nowrap;
+  flex-wrap: wrap;
+  row-gap: var(--entries-y-gap);
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--entry-y-gap);
+}
+
+.entry.vertical {
+  height: 100%;
+  flex-direction: column;
+  gap: var(--entry-y-gap);
+}
+
+.entry.horizontal {
+  flex-direction: row;
+  gap: var(--entry-x-gap);
+  flex-wrap: nowrap;
+}
+
+.entry.horizontal.centered {
+  align-items: center;
+}
+
+.entry .entry-header {
+  display: flex;
+  flex-direction: row;
+}
+
+.entry ul.entry-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--entries-y-gap);
+  list-style-type: '- ';
+  list-style-position: outside;
+  margin: 0;
+  padding: 0;
+  padding-left: var(--regular-font-size);
+}
+
+.entry-left {
+  flex: none;
+  width: var(--entry-left-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--entries-y-gap);
+}
+
+.entry-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--entries-y-gap);
+}
+
+.entry-right {
+  flex: none;
+  width: var(--entry-right-width);
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: var(--entries-y-gap);
+}
+
+.entry .entry-header span.entry-description:before {
+  content: ': ';
+  display: inline-block;
+  color: var(--secondary-color);
+}
+
+.entry.horizontal .entry-header span:not(.description):not(:last-of-type):after {
+  content: ', ';
+  display: inline-block;
+  color: var(--secondary-color);
+}
+
+h1 {
+  font-size: var(--h1-font-size);
+  font-weight: 800;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+h2 {
+  font-size: var(--h2-font-size);
+  font-weight: 500;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+h3 {
+  font-size: var(--h3-font-size);
+  font-weight: 800;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+i {
+  color: var(--primary-color);
+}
+
+i.fa-link {
+  margin-left: 0.5pt;
+  font-size: var(--link-icon-size);
+}
+
+span {
+  font-size: var(--regular-font-size);
+  color: var(--secondary-color);
+}
+
+p.content,
+span.entry-content {
+  font-size: var(--regular-font-size);
+  color: var(--secondary-color);
+  margin: 0;
+  line-height: var(--line-height);
+}
+
+section:not(.contact) span.entry-title {
+  font-weight: 700;
+  white-space: no-wrap;
+}
+
+a {
+  font-style: normal;
+  font-weight: 400;
+  text-decoration: none;
+}
